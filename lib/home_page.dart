@@ -13,7 +13,10 @@ class _HomepageState extends State<Homepage> {
   //텍스트필드의 값을 가져오는 컨트롤러
   final TextEditingController _textEditingController = TextEditingController();
 
-  final List<ChatMessage> _chats = [];
+  final List<String> _chats = [];
+  //애니메이티드 리스트 사용하기위해 필요, 이 키로 언제 어떤 애니를 줄지 컨트롤함
+  final GlobalKey<AnimatedListState> _animListKey =
+      GlobalKey<AnimatedListState>();
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +33,9 @@ class _HomepageState extends State<Homepage> {
             //     ChatMessage("message2"),
             //   ],
             // ),
-            child: ListView.builder(
-              itemBuilder: (context, index) {
-                return _chats[index];
-              },
-              itemCount: _chats.length,
+            child: AnimatedList(
+              key: _animListKey,
+              itemBuilder: _buildItem,
               reverse: true, // 메시지 아래가 최신것으로 보이는 방법
             ),
           ),
@@ -67,15 +68,16 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  Widget _buildItem(context, index, animation) {
+    //animation은 변화하는 값을 넣어주는 것임, 기본값 0.3
+    return ChatMessage(_chats[index], animation: animation);
+  }
+
   void _handleSubmitted(String text) {
     Logger().d(text);
-
-    setState(() {
-      ChatMessage newChat = ChatMessage(text);
-      // _chats.add(newChat); 이것을 쓰면 메시지가 반대로보임
-      _chats.insert(0, newChat);
-    });
-    // 함수 실행 시 기존 글자 제거
+    _chats.insert(0, text);
     _textEditingController.clear();
+    // 애니메이션한테 0번쨰 아이템이 새로 생성되었다고 알림
+    _animListKey.currentState!.insertItem(0);
   }
 }
